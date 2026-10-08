@@ -14,7 +14,7 @@ import { SessionV2 } from "@opencode-ai/core/session"
 import * as SessionExecutionLocal from "@opencode-ai/core/session/execution/local"
 import { locationServiceMapLayer } from "@opencode-ai/core/location-services"
 
-import { NotFoundError } from "@/storage/storage"
+import { NotFoundError, Storage } from "@/storage/storage"
 import { eq } from "drizzle-orm"
 import { and } from "drizzle-orm"
 import { gte } from "drizzle-orm"
@@ -486,13 +486,14 @@ export type Patch = Omit<Partial<Info>, "time" | "share" | "summary" | "revert" 
 const layer: Layer.Layer<
   Service,
   never,
-  BackgroundJob.Service | RuntimeFlags.Service | Database.Service | EventV2Bridge.Service
+  BackgroundJob.Service | Storage.Service | RuntimeFlags.Service | Database.Service | EventV2Bridge.Service
 > = Layer.effect(
   Service,
   Effect.gen(function* () {
     const { db } = yield* Database.Service
     const database = yield* Database.Service
     const background = yield* BackgroundJob.Service
+    const storage = yield* Storage.Service
     const events = yield* EventV2Bridge.Service
     const flags = yield* RuntimeFlags.Service
 
@@ -821,8 +822,9 @@ const layer: Layer.Layer<
     })
 
     const diff = Effect.fn("Session.diff")(function* (sessionID: SessionID) {
-      void sessionID
-      return [] as Snapshot.FileDiff[]
+      return yield* storage
+        .read<Snapshot.FileDiff[]>(["session_diff", sessionID])
+        .pipe(Effect.orElseSucceed((): Snapshot.FileDiff[] => []))
     })
 
     const messages: Interface["messages"] = Effect.fn("Session.messages")(function* (input) {
@@ -1010,7 +1012,7 @@ function listByProject(
 export const node = LayerNode.make({
   service: Service,
   layer: layer,
-  deps: [BackgroundJob.node, RuntimeFlags.node, Database.node, EventV2Bridge.node],
+  deps: [BackgroundJob.node, Storage.node, RuntimeFlags.node, Database.node, EventV2Bridge.node],
 })
 
 export * as Session from "./session"

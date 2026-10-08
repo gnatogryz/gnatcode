@@ -4,7 +4,7 @@ import { createDefaultOpenTuiKeymap } from "@opentui/keymap/opentui"
 import { DiffRenderable, type Renderable, ScrollBoxRenderable } from "@opentui/core"
 import { testRender, useRenderer } from "@opentui/solid"
 import type { TuiPluginApi, TuiPluginMeta, TuiRouteCurrent, TuiRouteDefinition } from "@opencode-ai/plugin/tui"
-import type { Session } from "@opencode-ai/sdk/v2"
+import type { Message, Session } from "@opencode-ai/sdk/v2"
 import { KVProvider } from "../../../src/context/kv"
 import { ThemeProvider } from "../../../src/context/theme"
 import { TuiConfigProvider } from "../../../src/config"
@@ -98,7 +98,12 @@ test("brackets navigate diff hunks", async () => {
   }
 })
 
-async function renderDiffViewer(vcsDiff: unknown[], height = 20, initialRoute?: TuiRouteCurrent) {
+async function renderDiffViewer(
+  vcsDiff: unknown[],
+  height = 20,
+  initialRoute?: TuiRouteCurrent,
+  messages: ReadonlyArray<Message> = [],
+) {
   const commands = new Map<
     string,
     NonNullable<Parameters<TuiPluginApi["keymap"]["registerLayer"]>[0]["commands"]>[number]
@@ -135,6 +140,7 @@ async function renderDiffViewer(vcsDiff: unknown[], height = 20, initialRoute?: 
       state: {
         session: {
           get: () => session,
+          messages: () => messages,
         },
       },
     })
@@ -236,6 +242,28 @@ test("last-turn diff source requests session diff", async () => {
       params: { mode: "last-turn", sessionID: "session-1", messageID: "message-1", returnRoute: startRoute },
     })
     expect(viewer.sessionDiffInput()).toEqual({ sessionID: "session-1", messageID: "message-1" })
+    expect(viewer.vcsDiffInput()).toBeUndefined()
+  } finally {
+    viewer.app.renderer.destroy()
+  }
+})
+
+test("last-turn diff source resolves the latest user message id", async () => {
+  const message = (id: string, role: Message["role"]) =>
+    ({
+      id,
+      sessionID: "session-1",
+      role,
+      time: { created: 0 },
+    }) as unknown as Message
+  const viewer = await renderDiffViewer(
+    [],
+    20,
+    { name: "diff", params: { mode: "last-turn", sessionID: "session-1", returnRoute: startRoute } },
+    [message("user-1", "user"), message("assistant-1", "assistant"), message("user-2", "user")],
+  )
+  try {
+    expect(viewer.sessionDiffInput()).toEqual({ sessionID: "session-1", messageID: "user-2" })
     expect(viewer.vcsDiffInput()).toBeUndefined()
   } finally {
     viewer.app.renderer.destroy()

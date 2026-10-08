@@ -102,12 +102,17 @@ function DiffViewer(props: { api: TuiPluginApi }) {
         }
       | undefined
   const mode = () => params()?.mode ?? "git"
+  const lastTurnMessageID = () => {
+    const sessionID = params()?.sessionID
+    if (!sessionID) return undefined
+    return props.api.state.session.messages(sessionID).findLast((message) => message.role === "user")?.id
+  }
   const diffInput = createMemo(() => {
     const sessionID = params()?.sessionID
     return {
       mode: mode(),
       sessionID,
-      messageID: params()?.messageID,
+      messageID: params()?.messageID ?? (mode() === "last-turn" ? lastTurnMessageID() : undefined),
       directory: sessionID ? props.api.state.session.get(sessionID)?.directory : undefined,
     }
   })
@@ -698,11 +703,15 @@ function DiffViewer(props: { api: TuiPluginApi }) {
             },
           ]
         : []),
-      {
-        title: "Last turn",
-        value: "last-turn" as const,
-        description: "Show changes from the last assistant turn",
-      },
+      ...(params()?.sessionID
+        ? [
+            {
+              title: "Last turn",
+              value: "last-turn" as const,
+              description: "Show changes from the last assistant turn",
+            },
+          ]
+        : []),
     ]
   })
 
