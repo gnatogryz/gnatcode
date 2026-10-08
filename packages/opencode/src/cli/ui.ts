@@ -3,10 +3,12 @@ import { Schema } from "effect"
 import { logo as glyphs } from "./logo"
 
 const wordmark = [
-  `⠀                                ▄     `,
-  `█▀▀█ █▀▀█ █▀▀█ █▀▀▄ █▀▀▀ █▀▀█ █▀▀█ █▀▀█`,
-  `█  █ █  █ █▀▀▀ █  █ █    █  █ █  █ █▀▀▀`,
-  `▀▀▀▀ █▀▀▀ ▀▀▀▀ ▀  ▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀`,
+  "                      __                 __   ",
+  "   ____ _____  ____ _/ /__________  ____/ /__ ",
+  "  / __ `/ __ \\/ __ `/ __/ ___/ __ \\/ __  / _ \\",
+  " / /_/ / / / / /_/ / /_/ /__/ /_/ / /_/ /  __/",
+  " \\__, /_/ /_/\\__,_/\\__/\\___/\\____/\\__,_/\\___/ ",
+  "/____/                                        ",
 ]
 
 export class CancelledError extends Schema.TaggedErrorClass<CancelledError>()("UICancelledError", {}) {}
@@ -72,6 +74,10 @@ export function logo(pad?: string) {
   const draw = (line: string, fg: string, shadow: string, bg: string) => {
     const parts: string[] = []
     for (const char of line) {
+      if (glyphs.literal) {
+        parts.push(char === " " ? " " : fg + char + reset)
+        continue
+      }
       if (char === "_") {
         parts.push(bg, " ", reset)
         continue

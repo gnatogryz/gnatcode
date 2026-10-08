@@ -1,6 +1,21 @@
 const logo = {
-  left: ["                   ", "█▀▀█ █▀▀█ █▀▀█ █▀▀▄", "█__█ █__█ █^^^ █__█", "▀▀▀▀ █▀▀▀ ▀▀▀▀ ▀~~▀"],
-  right: ["             ▄     ", "█▀▀▀ █▀▀█ █▀▀█ █▀▀█", "█___ █__█ █__█ █^^^", "▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀"],
+  literal: true,
+  left: [
+    "                      __ ",
+    "   ____ _____  ____ _/ /_",
+    "  / __ `/ __ \\/ __ `/ __/",
+    " / /_/ / / / / /_/ / /_  ",
+    " \\__, /_/ /_/\\__,_/\\__/  ",
+    "/____/                   ",
+  ],
+  right: [
+    "                  __   ",
+    "  _________  ____/ /__ ",
+    " / ___/ __ \\/ __  / _ \\",
+    "/ /__/ /_/ / /_/ /  __/",
+    "\\___/\\____/\\__,_/\\___/ ",
+    "                       ",
+  ],
 }
 
 const reset = "\x1b[0m"
@@ -11,6 +26,7 @@ function wordmark(pad = "") {
   const draw = (line: string, fg: string, shadow: string, bg: string) =>
     [...line]
       .map((char) => {
+        if (logo.literal) return char === " " ? " " : `${fg}${char}${reset}`
         if (char === "_") return `${bg} ${reset}`
         if (char === "^") return `${fg}${bg}▀${reset}`
         if (char === "~") return `${shadow}▀${reset}`
@@ -32,7 +48,7 @@ export function sessionEpilogue(input: { title: string; sessionID?: string }) {
     ...wordmark("  "),
     "",
     `  ${weak("Session")}${bold}${input.title}${reset}`,
-    `  ${weak("Continue")}${bold}opencode -s ${input.sessionID}${reset}`,
+    `  ${weak("Continue")}${bold}gnatcode -s ${input.sessionID}${reset}`,
     "",
   ].join("\n")
 }

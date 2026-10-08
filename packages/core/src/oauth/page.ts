@@ -6,10 +6,9 @@
 // offline and drop into any transport (`res.end(...)`, Effect `response.end`,
 // etc.).
 //
-// The visual language mirrors the OpenCode app: the design tokens are a curated
-// subset of the OC-2 semantic tokens in `packages/ui/src/styles/theme.css`, and
-// the wordmark is the same geometry as `packages/ui/src/components/logo.tsx`.
-// Keep this file in sync with those sources when the brand changes.
+// The visual language mirrors the gnatcode terminal client: the design tokens are a
+// curated subset of the shared OC-2 semantic tokens. Keep this file in sync when
+// the brand changes.
 
 export interface CallbackPageOptions {
   /** Friendly integration name shown as a subtitle, e.g. "xAI", "Snowflake", "MCP". */
@@ -25,7 +24,7 @@ export function success(options?: CallbackPageOptions) {
     body: renderCard({
       status: "success",
       headline: "Authorization successful",
-      message: provider ? `OpenCode is now connected to ${escapeHtml(provider)}.` : "OpenCode is now authorized.",
+      message: provider ? `gnatcode is now connected to ${escapeHtml(provider)}.` : "gnatcode is now authorized.",
       footnote: "You can close this window.",
     }),
     script: options?.autoClose === false ? undefined : AUTO_CLOSE_SCRIPT,
@@ -40,10 +39,10 @@ export function error(detail: string, options?: CallbackPageOptions) {
       status: "error",
       headline: "Authorization failed",
       message: provider
-        ? `OpenCode couldn't finish connecting to ${escapeHtml(provider)}.`
-        : "OpenCode couldn't complete authorization.",
+        ? `gnatcode couldn't finish connecting to ${escapeHtml(provider)}.`
+        : "gnatcode couldn't complete authorization.",
       detail,
-      footnote: "Close this window and try again from OpenCode.",
+      footnote: "Close this window and try again from gnatcode.",
     }),
   })
 }
@@ -100,7 +99,7 @@ function renderDocument(input: { title: string; body: string; script?: string })
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex" />
-    <title>${escapeHtml(input.title)} · OpenCode</title>
+    <title>${escapeHtml(input.title)} · gnatcode</title>
     <style>${STYLES}</style>
   </head>
   <body>
@@ -116,8 +115,8 @@ function bootstrapScript(options: BootstrapOptions) {
 var TOKEN_URL=new URL(${scriptString(options.tokenPath)},window.location.origin).href;
 (function(){
   var card=document.getElementById("oc-card"),headline=document.getElementById("oc-headline"),message=document.getElementById("oc-message"),detail=document.getElementById("oc-detail"),footnote=document.getElementById("oc-footnote");
-  function fail(text){card.dataset.status="error";headline.textContent="Authorization failed";message.textContent=PROVIDER?("OpenCode couldn't finish connecting to "+PROVIDER+"."):"OpenCode couldn't complete authorization.";if(text){detail.textContent=text;detail.hidden=false}footnote.textContent="Close this window and try again from OpenCode."}
-  function ok(){card.dataset.status="success";headline.textContent="Authorization successful";message.textContent=PROVIDER?("OpenCode is now connected to "+PROVIDER+"."):"OpenCode is now authorized.";detail.hidden=true;footnote.textContent="You can close this window.";setTimeout(function(){try{window.close()}catch(e){}},2500)}
+  function fail(text){card.dataset.status="error";headline.textContent="Authorization failed";message.textContent=PROVIDER?("gnatcode couldn't finish connecting to "+PROVIDER+"."):"gnatcode couldn't complete authorization.";if(text){detail.textContent=text;detail.hidden=false}footnote.textContent="Close this window and try again from gnatcode."}
+  function ok(){card.dataset.status="success";headline.textContent="Authorization successful";message.textContent=PROVIDER?("gnatcode is now connected to "+PROVIDER+"."):"gnatcode is now authorized.";detail.hidden=true;footnote.textContent="You can close this window.";setTimeout(function(){try{window.close()}catch(e){}},2500)}
   try{
     var hash=new URLSearchParams((window.location.hash||"").slice(1));
     var search=new URLSearchParams(window.location.search||"");
@@ -146,7 +145,7 @@ function escapeHtml(value: string) {
     .replaceAll("'", "&#39;")
 }
 
-// Curated subset of OC-2 tokens (packages/ui/src/styles/theme.css). Default is
+// Curated subset of OC-2 semantic tokens. Default is
 // light; dark applies via prefers-color-scheme. The [data-theme] selectors let a
 // host force a scheme without changing the default.
 const LIGHT_VARS = `
@@ -249,25 +248,8 @@ const STYLES = `
   @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
 `
 
-// OpenCode wordmark — same path geometry as packages/ui/src/components/logo.tsx (Logo).
-const WORDMARK = `<svg class="wordmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 234 42" fill="none" aria-label="OpenCode" role="img">
-        <path d="M18 30H6V18H18V30Z" fill="var(--oc-icon-weak)" />
-        <path d="M18 12H6V30H18V12ZM24 36H0V6H24V36Z" fill="var(--oc-icon-base)" />
-        <path d="M48 30H36V18H48V30Z" fill="var(--oc-icon-weak)" />
-        <path d="M36 30H48V12H36V30ZM54 36H36V42H30V6H54V36Z" fill="var(--oc-icon-base)" />
-        <path d="M84 24V30H66V24H84Z" fill="var(--oc-icon-weak)" />
-        <path d="M84 24H66V30H84V36H60V6H84V24ZM66 18H78V12H66V18Z" fill="var(--oc-icon-base)" />
-        <path d="M108 36H96V18H108V36Z" fill="var(--oc-icon-weak)" />
-        <path d="M108 12H96V36H90V6H108V12ZM114 36H108V12H114V36Z" fill="var(--oc-icon-base)" />
-        <path d="M144 30H126V18H144V30Z" fill="var(--oc-icon-weak)" />
-        <path d="M144 12H126V30H144V36H120V6H144V12Z" fill="var(--oc-icon-strong)" />
-        <path d="M168 30H156V18H168V30Z" fill="var(--oc-icon-weak)" />
-        <path d="M168 12H156V30H168V12ZM174 36H150V6H174V36Z" fill="var(--oc-icon-strong)" />
-        <path d="M198 30H186V18H198V30Z" fill="var(--oc-icon-weak)" />
-        <path d="M198 12H186V30H198V12ZM204 36H180V6H198V0H204V36Z" fill="var(--oc-icon-strong)" />
-        <path d="M234 24V30H216V24H234Z" fill="var(--oc-icon-weak)" />
-        <path d="M216 12V18H228V12H216ZM234 24H216V30H234V36H210V6H234V24Z" fill="var(--oc-icon-strong)" />
-      </svg>`
+// gnatcode wordmark — pixel-block geometry rendered from a 4x6 grid per glyph.
+const WORDMARK = `<svg class="wordmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 234 36" fill="var(--oc-icon-base)" aria-label="gnatcode" role="img"><path d="M6 0h18v6h-18Z" /><path d="M0 6h6v6h-6Z" /><path d="M18 6h6v6h-6Z" /><path d="M0 12h6v6h-6Z" /><path d="M18 12h6v6h-6Z" /><path d="M0 18h24v6h-24Z" /><path d="M18 24h6v6h-6Z" /><path d="M0 30h18v6h-18Z" /><path d="M30 6h18v6h-18Z" /><path d="M30 12h6v6h-6Z" /><path d="M48 12h6v6h-6Z" /><path d="M30 18h6v6h-6Z" /><path d="M48 18h6v6h-6Z" /><path d="M30 24h6v6h-6Z" /><path d="M48 24h6v6h-6Z" /><path d="M30 30h6v6h-6Z" /><path d="M48 30h6v6h-6Z" /><path d="M66 6h18v6h-18Z" /><path d="M78 12h6v6h-6Z" /><path d="M60 18h24v6h-24Z" /><path d="M60 24h6v6h-6Z" /><path d="M78 24h6v6h-6Z" /><path d="M60 30h24v6h-24Z" /><path d="M96 0h6v6h-6Z" /><path d="M90 6h18v6h-18Z" /><path d="M96 12h6v6h-6Z" /><path d="M96 18h6v6h-6Z" /><path d="M96 24h6v6h-6Z" /><path d="M96 30h12v6h-12Z" /><path d="M126 6h18v6h-18Z" /><path d="M120 12h6v6h-6Z" /><path d="M120 18h6v6h-6Z" /><path d="M120 24h6v6h-6Z" /><path d="M126 30h18v6h-18Z" /><path d="M156 6h12v6h-12Z" /><path d="M150 12h6v6h-6Z" /><path d="M168 12h6v6h-6Z" /><path d="M150 18h6v6h-6Z" /><path d="M168 18h6v6h-6Z" /><path d="M150 24h6v6h-6Z" /><path d="M168 24h6v6h-6Z" /><path d="M156 30h12v6h-12Z" /><path d="M198 0h6v6h-6Z" /><path d="M198 6h6v6h-6Z" /><path d="M180 12h24v6h-24Z" /><path d="M180 18h6v6h-6Z" /><path d="M198 18h6v6h-6Z" /><path d="M180 24h6v6h-6Z" /><path d="M198 24h6v6h-6Z" /><path d="M180 30h24v6h-24Z" /><path d="M216 6h12v6h-12Z" /><path d="M210 12h6v6h-6Z" /><path d="M228 12h6v6h-6Z" /><path d="M210 18h24v6h-24Z" /><path d="M210 24h6v6h-6Z" /><path d="M216 30h18v6h-18Z" /></svg>`
 
 const ICON_CHECK = `<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="m8.5 12.5 2.4 2.4 4.6-5.4" /></svg>`
 

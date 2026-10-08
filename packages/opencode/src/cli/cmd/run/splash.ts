@@ -1,6 +1,6 @@
 // Entry and exit splash banners for direct interactive mode scrollback.
 //
-// Renders the full opencode entry logo and a compact [O] exit badge, plus
+// Renders the full gnatcode entry logo and a compact [O] exit badge, plus
 // session metadata and the resume command. These are scrollback snapshots, so
 // they become immutable terminal history once committed.
 //
@@ -18,7 +18,7 @@ import {
   type ScrollbackWriter,
 } from "@opentui/core"
 import * as Locale from "@/util/locale"
-import { go } from "@/cli/logo"
+import { go, logo } from "@/cli/logo"
 import type { RunSplashTheme } from "./theme"
 
 export const SPLASH_TITLE_LIMIT = 50
@@ -150,10 +150,14 @@ function draw(
     fg: ColorInput
     shadow: ColorInput
     attrs?: number
+    literal?: boolean
   },
 ) {
   let x = input.left
-  for (const cell of cells(row)) {
+  const parsed = input.literal
+    ? [...row].map((char): Cell => ({ char, mark: "text" }))
+    : cells(row)
+  for (const cell of parsed) {
     if (cell.mark === "full" || cell.mark === "mix") {
       push(lines, x, input.top, cell.char, input.fg, input.shadow, input.attrs)
       x += 1
@@ -181,31 +185,39 @@ function build(input: SplashWriterInput, kind: "entry" | "exit", ctx: Scrollback
   let height = 1
 
   if (kind === "entry") {
-    const mark = go.right.slice(1)
     const top = 1
-    const body_left = (mark[0]?.length ?? 0) + 2
+    const leftWidth = Math.max(...logo.left.map((line) => line.length))
+    const body_left = leftWidth + 2
 
-    for (let i = 0; i < mark.length; i += 1) {
-      draw(lines, mark[i] ?? "", {
+    for (let i = 0; i < logo.left.length; i += 1) {
+      draw(lines, logo.left[i] ?? "", {
         left: 0,
         top: top + i,
         fg: left,
         shadow: leftShadow,
+        literal: logo.literal,
+      })
+      draw(lines, logo.right[i] ?? "", {
+        left: body_left,
+        top: top + i,
+        fg: right,
+        shadow: input.theme.rightShadow,
+        attrs: TextAttributes.BOLD,
+        literal: logo.literal,
       })
     }
 
-    push(lines, body_left, top, "OpenCode", right, undefined, TextAttributes.BOLD)
     if (input.detail) {
       push(
         lines,
         body_left,
-        top + 1,
+        top + logo.left.length + 1,
         Locale.truncateMiddle(input.detail, Math.max(1, width - body_left)),
         left,
         undefined,
       )
     }
-    height = top + mark.length
+    height = top + logo.left.length + (input.detail ? 2 : 0)
   }
 
   if (kind === "exit") {
