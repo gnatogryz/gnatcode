@@ -1,9 +1,18 @@
 import type { TuiPlugin, TuiPluginApi } from "@opencode-ai/plugin/tui"
 import type { BuiltinTuiPlugin } from "../builtins"
 import { createMemo, For, Show, createSignal } from "solid-js"
+import { spawn } from "node:child_process"
+import path from "node:path"
 import { Locale } from "../../util/locale"
 
 const id = "internal:sidebar-files"
+
+function openInCode(root: string, file: string) {
+  const target = path.isAbsolute(file) ? file : path.join(root, file)
+  const child = spawn("code", [target], { stdio: "ignore", detached: true })
+  child.on("error", () => {})
+  child.unref()
+}
 
 function changeCountWidth(item: { additions: number; deletions: number }) {
   return [item.additions ? `+${item.additions}` : "", item.deletions ? `-${item.deletions}` : ""]
@@ -30,7 +39,12 @@ function View(props: { api: TuiPluginApi; session_id: string }) {
         <Show when={list().length <= 2 || open()}>
           <For each={list()}>
             {(item) => (
-              <box flexDirection="row" gap={1} justifyContent="space-between">
+              <box
+                flexDirection="row"
+                gap={1}
+                justifyContent="space-between"
+                onMouseDown={() => openInCode(props.api.state.path.worktree, item.file)}
+              >
                 <text fg={theme().textMuted} wrapMode="none">
                   {Locale.truncateLeft(item.file, Math.max(2, 36 - changeCountWidth(item)))}
                 </text>
