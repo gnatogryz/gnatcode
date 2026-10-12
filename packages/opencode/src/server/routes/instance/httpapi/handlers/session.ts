@@ -103,6 +103,11 @@ export const sessionHandlers = HttpApiBuilder.group(InstanceHttpApi, "session", 
       return yield* summary.diff({ sessionID: ctx.params.sessionID, messageID: ctx.query.messageID })
     })
 
+    const clearDiff = Effect.fn("SessionHttpApi.clearDiff")(function* (ctx: { params: { sessionID: SessionID } }) {
+      yield* requireSession(ctx.params.sessionID)
+      return yield* summary.clear({ sessionID: ctx.params.sessionID })
+    })
+
     const messages = Effect.fn("SessionHttpApi.messages")(function* (ctx: {
       params: { sessionID: SessionID }
       query: typeof MessagesQuery.Type
@@ -417,6 +422,7 @@ export const sessionHandlers = HttpApiBuilder.group(InstanceHttpApi, "session", 
       .handle("children", children)
       .handle("todo", todo)
       .handle("diff", diff)
+      .handle("clearDiff", clearDiff)
       .handle("messages", messages)
       .handle("message", message)
       .handleRaw("create", createRaw)

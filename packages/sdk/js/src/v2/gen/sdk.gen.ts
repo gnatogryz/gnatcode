@@ -179,6 +179,8 @@ import type {
   SessionAbortResponses,
   SessionChildrenErrors,
   SessionChildrenResponses,
+  SessionClearDiffErrors,
+  SessionClearDiffResponses,
   SessionCommandErrors,
   SessionCommandResponses,
   SessionCreateErrors,
@@ -4250,6 +4252,38 @@ export class Session2 extends HeyApiClient {
         ...options?.headers,
         ...params.headers,
       },
+    })
+  }
+
+  /**
+   * Clear session diff
+   *
+   * Reset the session file diff baseline so the current state becomes the comparison point.
+   */
+  public clearDiff<ThrowOnError extends boolean = false>(
+    parameters: {
+      sessionID: string
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "sessionID" },
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<SessionClearDiffResponses, SessionClearDiffErrors, ThrowOnError>({
+      url: "/session/{sessionID}/diff/clear",
+      ...options,
+      ...params,
     })
   }
 

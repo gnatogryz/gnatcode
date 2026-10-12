@@ -28,13 +28,22 @@ function View(props: { api: TuiPluginApi; session_id: string }) {
   return (
     <Show when={list().length > 0}>
       <box>
-        <box flexDirection="row" gap={1} onMouseDown={() => list().length > 2 && setOpen((x) => !x)}>
-          <Show when={list().length > 2}>
-            <text fg={theme().text}>{open() ? "▼" : "▶"}</text>
-          </Show>
-          <text fg={theme().text}>
-            <b>Modified Files</b>
-          </text>
+        <box flexDirection="row" gap={1} justifyContent="space-between">
+          <box flexDirection="row" gap={1} onMouseDown={() => list().length > 2 && setOpen((x) => !x)}>
+            <Show when={list().length > 2}>
+              <text fg={theme().text}>{open() ? "▼" : "▶"}</text>
+            </Show>
+            <text fg={theme().text}>
+              <b>Modified Files</b>
+            </text>
+          </box>
+          <box
+            onMouseDown={() => {
+              void props.api.client.session.clearDiff({ sessionID: props.session_id }).catch(() => {})
+            }}
+          >
+            <text fg={theme().textMuted}>✕</text>
+          </box>
         </box>
         <Show when={list().length <= 2 || open()}>
           <For each={list()}>

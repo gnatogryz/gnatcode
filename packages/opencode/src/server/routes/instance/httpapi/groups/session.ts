@@ -82,6 +82,7 @@ export const SessionPaths = {
   children: `${root}/:sessionID/children`,
   todo: `${root}/:sessionID/todo`,
   diff: `${root}/:sessionID/diff`,
+  clearDiff: `${root}/:sessionID/diff/clear`,
   messages: `${root}/:sessionID/message`,
   message: `${root}/:sessionID/message/:messageID`,
   create: root,
@@ -364,6 +365,18 @@ export const SessionApi = HttpApi.make("session")
             identifier: "session.shell",
             summary: "Run shell command",
             description: "Execute a shell command within the session context and return the AI's response.",
+          }),
+        ),
+        HttpApiEndpoint.post("clearDiff", SessionPaths.clearDiff, {
+          params: { sessionID: SessionID },
+          query: WorkspaceRoutingQuery,
+          success: described(Schema.Array(Snapshot.FileDiff), "Cleared diff"),
+          error: [HttpApiError.BadRequest, ApiNotFoundError],
+        }).annotateMerge(
+          OpenApi.annotations({
+            identifier: "session.clearDiff",
+            summary: "Clear session diff",
+            description: "Reset the session file diff baseline so the current state becomes the comparison point.",
           }),
         ),
         HttpApiEndpoint.post("revert", SessionPaths.revert, {

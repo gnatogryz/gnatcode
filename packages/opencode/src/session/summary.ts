@@ -77,6 +77,7 @@ export interface Interface {
   readonly summarize: (input: { sessionID: SessionID; messageID: MessageID }) => Effect.Effect<void>
   readonly diff: (input: { sessionID: SessionID; messageID?: MessageID }) => Effect.Effect<Snapshot.FileDiff[]>
   readonly computeDiff: (input: { messages: SessionV1.WithParts[] }) => Effect.Effect<Snapshot.FileDiff[]>
+  readonly clear: (input: { sessionID: SessionID }) => Effect.Effect<Snapshot.FileDiff[]>
 }
 
 export class Service extends Context.Service<Service, Interface>()("@opencode/SessionSummary") {}
@@ -123,6 +124,11 @@ const layer = Layer.effect(
       yield* events.publish(Session.Event.Diff, { sessionID, diff: diffs })
     })
 
+    const readAnchor = (sessionID: SessionID) =>
+      storage
+        .read<string>(["session_diff_anchor", sessionID])
+        .pipe(Effect.catch(() => Effect.succeed(undefined)))
+
     const summarize = Effect.fn("SessionSummary.summarize")(function* (input: {
       sessionID: SessionID
       messageID: MessageID
@@ -133,7 +139,9 @@ const layer = Layer.effect(
       }
 
       const all = yield* sessions.messages({ sessionID: input.sessionID }).pipe(Effect.orDie)
-      const diffs = yield* computeDiff({ messages: all })
+      const anchor = yield* readAnchor(input.sessionID)
+      const index = anchor ? all.findIndex((message) => message.info.id === anchor) : -1
+      const diffs = yield* computeDiff({ messages: index >= 0 ? all.slice(index + 1) : all })
       yield* record(input.sessionID, diffs)
       if (!all.length) return
 
@@ -165,7 +173,16 @@ const layer = Layer.effect(
       return next
     })
 
-    return Service.of({ summarize, diff, computeDiff })
+    const clear = Effect.fn("SessionSummary.clear")(function* (input: { sessionID: SessionID }) {
+      const all = yield* sessions.messages({ sessionID: input.sessionID }).pipe(Effect.orDie)
+      const anchor = all.at(-1)?.info.id
+      if (anchor) yield* storage.write(["session_diff_anchor", input.sessionID], anchor).pipe(Effect.ignore)
+      else yield* storage.remove(["session_diff_anchor", input.sessionID]).pipe(Effect.ignore)
+      yield* record(input.sessionID, [])
+      return [] as Snapshot.FileDiff[]
+    })
+
+    return Service.of({ summarize, diff, computeDiff, clear })
   }),
 )
 

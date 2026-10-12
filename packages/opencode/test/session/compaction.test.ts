@@ -40,6 +40,7 @@ const summary = Layer.succeed(
     summarize: () => Effect.void,
     diff: () => Effect.succeed([]),
     computeDiff: () => Effect.succeed([]),
+    clear: () => Effect.succeed([]),
   }),
 )
 

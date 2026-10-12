@@ -10291,6 +10291,40 @@ export type SessionShellResponses = {
 
 export type SessionShellResponse = SessionShellResponses[keyof SessionShellResponses]
 
+export type SessionClearDiffData = {
+  body?: never
+  path: {
+    sessionID: string
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/session/{sessionID}/diff/clear"
+}
+
+export type SessionClearDiffErrors = {
+  /**
+   * BadRequest | InvalidRequestError
+   */
+  400: EffectHttpApiErrorBadRequest | InvalidRequestError
+  /**
+   * NotFoundError
+   */
+  404: NotFoundError
+}
+
+export type SessionClearDiffError = SessionClearDiffErrors[keyof SessionClearDiffErrors]
+
+export type SessionClearDiffResponses = {
+  /**
+   * Cleared diff
+   */
+  200: Array<SnapshotFileDiff>
+}
+
+export type SessionClearDiffResponse = SessionClearDiffResponses[keyof SessionClearDiffResponses]
+
 export type SessionRevertData = {
   body?: {
     messageID: string
