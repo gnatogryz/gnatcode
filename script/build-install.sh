@@ -86,12 +86,12 @@ detect_arch() {
 
 TARGET_OS="$(detect_target)"
 TARGET_ARCH="$(detect_arch)"
-# The build always names its output after the package name ("opencode"),
-# independent of the command name we install under.
-DIST_NAME="opencode-$TARGET_OS-$TARGET_ARCH"
+# The build names its output after the app name ("gnatcode"), independent of
+# the command name we install under.
+DIST_NAME="gnatcode-$TARGET_OS-$TARGET_ARCH"
 BINARY_BASENAME="$NAME"
 [[ "$TARGET_OS" == "windows" ]] && BINARY_BASENAME="$NAME.exe"
-SRC_BINARY="$PKG_DIR/dist/$DIST_NAME/bin/opencode"
+SRC_BINARY="$PKG_DIR/dist/$DIST_NAME/bin/gnatcode"
 
 [[ -f "$SRC_BINARY" ]] || fail "build produced no binary at $SRC_BINARY (looked for $DIST_NAME)"
 

@@ -14,7 +14,7 @@
   node_modules ? callPackage ./node-modules.nix { },
 }:
 stdenvNoCC.mkDerivation (finalAttrs: {
-  pname = "opencode";
+  pname = "gnatcode";
   inherit (node_modules) version src;
   inherit node_modules;
 
@@ -62,10 +62,10 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   installPhase = ''
     runHook preInstall
 
-    install -Dm755 dist/opencode-*/bin/opencode $out/bin/opencode
-    install -Dm644 schema.json $out/share/opencode/schema.json
+    install -Dm755 dist/gnatcode-*/bin/gnatcode $out/bin/gnatcode
+    install -Dm644 schema.json $out/share/gnatcode/schema.json
 
-    wrapProgram $out/bin/opencode \
+    wrapProgram $out/bin/gnatcode \
       --prefix PATH : ${
         lib.makeBinPath (
           [
@@ -81,9 +81,9 @@ stdenvNoCC.mkDerivation (finalAttrs: {
 
   postInstall = lib.optionalString (stdenvNoCC.buildPlatform.canExecute stdenvNoCC.hostPlatform) ''
     # trick yargs into also generating zsh completions
-    installShellCompletion --cmd opencode \
-      --bash <($out/bin/opencode completion) \
-      --zsh <(SHELL=/bin/zsh $out/bin/opencode completion)
+    installShellCompletion --cmd gnatcode \
+      --bash <($out/bin/gnatcode completion) \
+      --zsh <(SHELL=/bin/zsh $out/bin/gnatcode completion)
   '';
 
   nativeInstallCheckInputs = [
@@ -95,15 +95,15 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   versionCheckProgramArg = "--version";
 
   passthru = {
-    jsonschema = "${placeholder "out"}/share/opencode/schema.json";
+    jsonschema = "${placeholder "out"}/share/gnatcode/schema.json";
     env = finalAttrs.env;
   };
 
   meta = {
     description = "The open source coding agent";
-    homepage = "https://opencode.ai";
+    homepage = "https://github.com/gnatogryz/gnatcode";
     license = lib.licenses.mit;
-    mainProgram = "opencode";
+    mainProgram = "gnatcode";
     inherit (node_modules.meta) platforms;
   };
 })

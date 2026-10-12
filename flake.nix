@@ -39,7 +39,7 @@
             };
           in
           rec {
-            opencode = final.callPackage ./nix/opencode.nix {
+            gnatcode = final.callPackage ./nix/gnatcode.nix {
               inherit node_modules;
             };
           };
@@ -53,8 +53,8 @@
           };
         in
         rec {
-          default = opencode;
-          opencode = pkgs.callPackage ./nix/opencode.nix {
+          default = gnatcode;
+          gnatcode = pkgs.callPackage ./nix/gnatcode.nix {
             inherit node_modules;
           };
           # Updater derivation with fakeHash - build fails and reveals correct hash
