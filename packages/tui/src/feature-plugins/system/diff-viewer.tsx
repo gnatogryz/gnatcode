@@ -43,7 +43,7 @@ const VCS_DIFF_CONTEXT_LINES = 12
 const KV_SHOW_FILE_TREE = "diff_viewer_show_file_tree"
 const KV_SINGLE_PATCH = "diff_viewer_single_patch"
 const KV_VIEW = "diff_viewer_view"
-type DiffMode = "git" | "branch" | "last-turn"
+type DiffMode = "git" | "branch" | "session" | "last-turn"
 type DiffViewerFocus = "patches" | "files"
 type DiffView = "split" | "unified"
 type SelectedHunk = { readonly fileIndex: number; readonly hunkIndex: number; readonly scrollTop: number }
@@ -83,6 +83,7 @@ function storedView(value: unknown): DiffView | undefined {
 }
 
 function diffSourceLabel(mode: DiffMode) {
+  if (mode === "session") return "session"
   if (mode === "last-turn") return "last turn"
   if (mode === "branch") return "main branch"
   return "working tree"
@@ -98,6 +99,7 @@ function DiffViewer(props: { api: TuiPluginApi }) {
           mode?: DiffMode
           sessionID?: string
           messageID?: string
+          file?: string
           returnRoute?: TuiRouteCurrent
         }
       | undefined
@@ -124,6 +126,13 @@ function DiffViewer(props: { api: TuiPluginApi }) {
         { sessionID, messageID: input.messageID },
         { throwOnError: true },
       )
+      return normalizeDiffs(result.data ?? [])
+    }
+
+    if (input.mode === "session") {
+      const sessionID = input.sessionID
+      if (!sessionID) return []
+      const result = await props.api.client.session.diff({ sessionID }, { throwOnError: true })
       return normalizeDiffs(result.data ?? [])
     }
 
@@ -399,6 +408,17 @@ function DiffViewer(props: { api: TuiPluginApi }) {
     dimensions()
     view()
     measurePatchFiller()
+  })
+
+  let focusedTargetFile: string | undefined
+  createEffect(() => {
+    const file = params()?.file
+    if (!file || focusedTargetFile === file) return
+    const fileIndex = files().findIndex((entry) => entry.file === file)
+    if (fileIndex === -1) return
+    focusedTargetFile = file
+    selectPatchFile(fileIndex)
+    scrollToPatchFileIndexAfterRender(fileIndex)
   })
 
   const toggleSelectedFileTreeRow = () => {
@@ -705,6 +725,11 @@ function DiffViewer(props: { api: TuiPluginApi }) {
         : []),
       ...(params()?.sessionID
         ? [
+            {
+              title: "Session",
+              value: "session" as const,
+              description: "Show all changes for this session",
+            },
             {
               title: "Last turn",
               value: "last-turn" as const,

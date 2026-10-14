@@ -1,82 +1,10 @@
 import type { TuiPlugin, TuiPluginApi } from "@opencode-ai/plugin/tui"
 import type { BuiltinTuiPlugin } from "../builtins"
 import { createMemo, For, Show, createSignal } from "solid-js"
-import { spawn } from "node:child_process"
-import { createHash } from "node:crypto"
-import { existsSync, mkdirSync, writeFileSync } from "node:fs"
-import os from "node:os"
-import path from "node:path"
 import { Locale } from "../../util/locale"
 
 const id = "internal:sidebar-files"
-
-type DiffItem = { file: string; additions: number; deletions: number; patch?: string; status?: string }
-
-function launch(command: string, args: string[]) {
-  const child = spawn(command, args, { stdio: "ignore", detached: true })
-  child.on("error", () => {})
-  child.unref()
-}
-
-function splitPatch(patch: string) {
-  const before: string[] = []
-  const after: string[] = []
-  let hunk = false
-  let side: "before" | "after" | "both" = "both"
-  let beforeNewline = true
-  let afterNewline = true
-  for (const line of patch.split("\n")) {
-    if (line.startsWith("@@")) {
-      hunk = true
-      continue
-    }
-    if (!hunk || line === "") continue
-    if (line.startsWith("\\")) {
-      if (line.includes("No newline at end of file")) {
-        if (side !== "after") beforeNewline = false
-        if (side !== "before") afterNewline = false
-      }
-      continue
-    }
-    const content = line.slice(1)
-    const sign = line.charAt(0)
-    if (sign === "-") {
-      before.push(content)
-      side = "before"
-    } else if (sign === "+") {
-      after.push(content)
-      side = "after"
-    } else {
-      before.push(content)
-      after.push(content)
-      side = "both"
-    }
-  }
-  return {
-    before: before.length === 0 ? "" : before.join("\n") + (beforeNewline ? "\n" : ""),
-    after: after.length === 0 ? "" : after.join("\n") + (afterNewline ? "\n" : ""),
-  }
-}
-
-function snapshotFile(file: string, content: string) {
-  const dir = path.join(os.tmpdir(), "opencode-snapshot", createHash("sha1").update(file).digest("hex"))
-  mkdirSync(dir, { recursive: true })
-  const target = path.join(dir, path.basename(file))
-  writeFileSync(target, content)
-  return target
-}
-
-function openInCode(root: string, item: DiffItem) {
-  const target = path.isAbsolute(item.file) ? item.file : path.join(root, item.file)
-  if (!item.patch || !item.status) {
-    launch("code", [target])
-    return
-  }
-  const { before, after } = splitPatch(item.patch)
-  const original = snapshotFile(item.file, before)
-  const current = existsSync(target) ? target : snapshotFile(`${item.file}.after`, after)
-  launch("code", ["--diff", original, current])
-}
+const DIFF_ROUTE = "diff"
 
 function changeCountWidth(item: { additions: number; deletions: number }) {
   return [item.additions ? `+${item.additions}` : "", item.deletions ? `-${item.deletions}` : ""]
@@ -116,7 +44,14 @@ function View(props: { api: TuiPluginApi; session_id: string }) {
                 flexDirection="row"
                 gap={1}
                 justifyContent="space-between"
-                onMouseDown={() => openInCode(props.api.state.path.worktree, item as DiffItem)}
+                onMouseDown={() =>
+                  props.api.route.navigate(DIFF_ROUTE, {
+                    mode: "session",
+                    sessionID: props.session_id,
+                    file: item.file,
+                    returnRoute: props.api.route.current,
+                  })
+                }
               >
                 <text fg={theme().textMuted} wrapMode="none">
                   {Locale.truncateLeft(item.file, Math.max(2, 36 - changeCountWidth(item)))}
