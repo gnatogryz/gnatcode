@@ -1,6 +1,6 @@
 import type { TuiPlugin, TuiPluginApi } from "@opencode-ai/plugin/tui"
 import type { BuiltinTuiPlugin } from "../builtins"
-import { createMemo, Show } from "solid-js"
+import { createMemo, For, Show } from "solid-js"
 import { abbreviateHome } from "../../runtime"
 import { useTuiPaths } from "../../context/runtime"
 
@@ -27,6 +27,22 @@ function View(props: { api: TuiPluginApi; sessionID: string }) {
       parent: list.slice(0, -1).join("/"),
       name: list.at(-1) ?? "",
     }
+  })
+  const services = createMemo(() => {
+    const mcpColor = (status: string) => {
+      if (status === "connected") return theme().success
+      if (status === "failed") return theme().error
+      if (status === "needs_client_registration") return theme().error
+      if (status === "needs_auth") return theme().warning
+      return theme().textMuted
+    }
+    return [
+      ...props.api.state.mcp().map((item) => ({ name: item.name, color: mcpColor(item.status) })),
+      ...props.api.state.lsp().map((item) => ({
+        name: item.id,
+        color: item.status === "connected" ? theme().success : theme().error,
+      })),
+    ]
   })
 
   return (
@@ -68,12 +84,16 @@ function View(props: { api: TuiPluginApi; sessionID: string }) {
         <span style={{ fg: theme().textMuted }}>{path().parent}/</span>
         <span style={{ fg: theme().text }}>{path().name}</span>
       </text>
-      <text fg={theme().textMuted}>
-        <span style={{ fg: theme().success }}>•</span> <b>Gnat</b>
-        <span style={{ fg: theme().text }}>
-          <b>Code</b>
-        </span>
-      </text>
+      <box flexDirection="row" flexWrap="wrap" gap={1} rowGap={0}>
+        <For each={services()}>
+          {(item) => (
+            <text>
+              <span style={{ fg: item.color }}>•</span>
+              <span style={{ fg: theme().textMuted }}> {item.name}</span>
+            </text>
+          )}
+        </For>
+      </box>
     </box>
   )
 }
