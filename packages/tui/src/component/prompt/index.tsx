@@ -10,6 +10,7 @@ import {
 } from "@opentui/core"
 import type { CommandContext } from "@opentui/keymap"
 import { createEffect, createMemo, onMount, createSignal, onCleanup, on, Show, Switch, Match } from "solid-js"
+import { registerOpencodeSpinner } from "../register-spinner"
 import path from "path"
 import { fileURLToPath } from "url"
 import { useLocal } from "../../context/local"
@@ -38,6 +39,7 @@ import { useRenderer, useTerminalDimensions, type JSX } from "@opentui/solid"
 import type { FilePart, UserMessage } from "@opencode-ai/sdk/v2"
 import { Locale } from "../../util/locale"
 import { errorMessage } from "../../util/error"
+import { createColors, createFrames } from "../../ui/spinner"
 import { useDialog } from "../../ui/dialog"
 import { DialogProvider as DialogProviderConnect } from "../dialog-provider"
 import { useToast } from "../../ui/toast"
@@ -51,6 +53,8 @@ import { useTuiConfig } from "../../config"
 import { usePromptWorkspace } from "./workspace"
 import { usePromptMove } from "./move"
 import { readLocalAttachment } from "./local-attachment"
+
+registerOpencodeSpinner()
 
 export type PromptProps = {
   sessionID?: string
@@ -1258,6 +1262,27 @@ export function Prompt(props: PromptProps) {
     return `Ask anything… "${list()[store.placeholder % list().length]}"`
   })
 
+  const spinnerDef = createMemo(() => {
+    const agent =
+      status().type !== "idle"
+        ? (local.agent.list().find((a) => a.name === lastUserMessage()?.agent) ?? local.agent.current())
+        : local.agent.current()
+    const color = agent ? local.agent.color(agent.name) : theme.border
+    return {
+      frames: createFrames({
+        color,
+        style: "blocks",
+        inactiveFactor: 0.6,
+        minAlpha: 0.3,
+      }),
+      color: createColors({
+        color,
+        style: "blocks",
+        inactiveFactor: 0.6,
+        minAlpha: 0.3,
+      }),
+    }
+  })
   const maxHeight = createMemo(() => tuiConfig.prompt?.max_height ?? Math.max(6, Math.floor(dimensions().height / 3)))
   const moveLabelWidth = createMemo(() => Math.max(12, Math.min(44, dimensions().width - 48)))
 
@@ -1392,11 +1417,14 @@ export function Prompt(props: PromptProps) {
                   )}
                 </Show>
               </box>
-              <Show when={hasRightContent()}>
-                <box flexDirection="row" gap={1} alignItems="center">
-                  {props.right}
-                </box>
-              </Show>
+              <box flexDirection="row" gap={1} alignItems="center">
+                <Show when={status().type !== "idle"}>
+                  <Show when={kv.get("animations_enabled", true)} fallback={<text fg={theme.textMuted}>[⋯]</text>}>
+                    <spinner color={spinnerDef().color} frames={spinnerDef().frames} interval={40} />
+                  </Show>
+                </Show>
+                <Show when={hasRightContent()}>{props.right}</Show>
+              </box>
             </box>
           </box>
         </box>
